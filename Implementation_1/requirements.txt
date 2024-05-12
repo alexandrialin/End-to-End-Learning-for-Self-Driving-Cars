@@ -1,7 +1,7 @@
 numpy
 matplotlib
-cv2
 keras
 h5py
 scipy
 tensorflow
+opencv-python==4.9.0.80

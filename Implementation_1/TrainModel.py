@@ -3,41 +3,38 @@ from sklearn.model_selection import train_test_split
 from sklearn.utils import shuffle
 from keras.layers import Input, Dense, Activation, Flatten, Conv2D, Lambda
 from keras.layers import MaxPooling2D, Dropout
-from keras.utils import print_summary
 import tensorflow as tf
 from keras.models import Sequential
 from keras.callbacks import ModelCheckpoint
 import pickle
 from keras.optimizers import Adam
+from keras import losses
+from keras.layers import Input, Lambda, Conv2D, MaxPooling2D, Flatten, Dropout, Dense, Activation
 
 
 def keras_model():
-    model = Sequential()
-    model.add(Lambda(lambda x: x / 127.5 - 1., input_shape=(40, 40, 1)))
+    model = Sequential([
+        Input(shape=(40, 40, 1)),
+        Lambda(lambda x: x / 127.5 - 1.),
+        Conv2D(32, (3, 3), padding='same'),
+        Activation('relu'),
+        MaxPooling2D((2, 2), padding='valid'),
+        Conv2D(64, (3, 3), padding='same'),
+        Activation('relu'),
+        MaxPooling2D((2, 2), padding='valid'),
+        Conv2D(128, (3, 3), padding='same'),
+        Activation('relu'),
+        MaxPooling2D((2, 2), padding='valid'),
+        Flatten(),
+        Dropout(0.5),
+        Dense(128),
+        Dense(64),
+        Dense(1)
+    ])
 
-    model.add(Conv2D(32, (3, 3), padding='same'))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D((2, 2), padding='valid'))
-
-    model.add(Conv2D(64, (3, 3), padding='same'))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D((2, 2), padding='valid'))
-
-    model.add(Conv2D(128, (3, 3), padding='same'))
-    model.add(Activation('relu'))
-    model.add(MaxPooling2D((2, 2), padding='valid'))
-
-    model.add(Flatten())
-    model.add(Dropout(0.5))
-
-    model.add(Dense(128))
-
-    model.add(Dense(64))
-    model.add(Dense(1))
-
-    model.compile(optimizer=Adam(lr=0.0001), loss="mse")
-    filepath = "Autopilot.h5"
-    checkpoint1 = ModelCheckpoint(filepath, verbose=1, save_best_only=True)
+    model.compile(optimizer=Adam(learning_rate=0.0001), loss=losses.mean_squared_error)
+    filepath = "Autopilot.keras"
+    checkpoint1 = ModelCheckpoint(filepath, monitor='val_loss', verbose=1, save_best_only=True, mode='auto')
     callbacks_list = [checkpoint1]
 
     return model, callbacks_list
@@ -69,7 +66,7 @@ def main():
     model, callbacks_list = keras_model()
     model.fit(train_x, train_y, validation_data=(test_x, test_y), epochs=5, batch_size=64,
               callbacks=callbacks_list)
-    print_summary(model)
+    model.summary()
     model.save('Autopilot.h5')
 
 
